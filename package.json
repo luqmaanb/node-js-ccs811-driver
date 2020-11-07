@@ -1,0 +1,16 @@
+{
+  "name": "ccs811",
+  "version": "0.0.1",
+  "description": "Node js driver for CCS811 I2C sensor intended for Linux platforms",
+  "main": "ccs811.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/luqmaanb/node-js-ccs811-driver"
+  },
+  "author": "Luqmaan Baboo",
+  "license": "MIT",
+  "homepage": "https://github.com/luqmaanb/node-js-ccs811-driver#readme",
+  "dependencies": {
+    "i2c-bus": "^5.1.0"
+  }
+}
