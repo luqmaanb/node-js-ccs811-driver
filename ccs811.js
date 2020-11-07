@@ -73,9 +73,6 @@ class ccs811Driver {
     });
   }
 
-  /********************************************************
- 	Configure Sensor
-*********************************************************/
   initializeSensor() {
     let ID = this.i2cBus.readByteSync(this.i2cAddress, this.CSS811_REG_HW_ID);
     if (ID == this.CSS811_HW_CODE) {
@@ -98,9 +95,6 @@ class ccs811Driver {
     }
   }
 
-  /********************************************************
- 	Read Data from CCS811 Sensor
-*********************************************************/
   getAlgorithmResults() {
     let buf = new Buffer.alloc(8);
     this.i2cBus.readI2cBlockSync(
@@ -119,9 +113,6 @@ class ccs811Driver {
     return true;
   }
 
-  /********************************************************
- 	Check is new data is available
-*********************************************************/
   dataAvailable() {
     let status = this.i2cBus.readByteSync(
       this.i2cAddress,
@@ -133,19 +124,7 @@ class ccs811Driver {
     }
     return true;
   }
-  /********************************************************
- 	Enable CCS811 Sensor Interrupt
-*********************************************************/
-  // void xSG33::enableInterrupt(void)
-  // {
-  // 	uint8_t meas_mode = xCore.read8(SG33_I2C_ADDR, CSS811_REG_MEAS_MODE);
-  // 	meas_mode ^= (-1 ^ meas_mode) & (1 << 3);
-  // 	xCore.write8(SG33_I2C_ADDR, CSS811_REG_MEAS_MODE, meas_mode);
-  // }
 
-  /********************************************************
- 	Disable CCS811 Sensor Interrupt
-*********************************************************/
   disableInterrupt() {
     let meas_mode = this.i2cBus.readByteSync(
       this.i2cAddress,
@@ -159,23 +138,14 @@ class ccs811Driver {
     );
   }
 
-  /********************************************************
- 	Read TVOC from CCS811 Sensor
-*********************************************************/
   readTVOC() {
     return this._TVOC;
   }
 
-  /********************************************************
- 	Read CO2 from CCS811 Sensor
-*********************************************************/
   readCO2() {
     return this._eCO2;
   }
 
-  /********************************************************
- 	Set the mode for IAQ measurements
-*********************************************************/
   setDriveMode(mode) {
     let meas_mode = this.i2cBus.readByteSync(
       this.i2cAddress,
@@ -189,11 +159,6 @@ class ccs811Driver {
     );
   }
 
-  /*--Private Class Function--*/
-
-  /********************************************************
- 	Perfrom a Software Reset of CCS811
-*********************************************************/
   softwareReset() {
     let buf = Buffer.from([0x11, 0xe5, 0x72, 0x8a]);
     this.i2cBus.writeI2cBlockSync(
@@ -204,9 +169,6 @@ class ccs811Driver {
     );
   }
 
-  /********************************************************
- 	Check if error has occured on CCS811
-*********************************************************/
   checkErrorFlag() {
     let error = this.i2cBus.readByteSync(
       this.i2cAddress,
@@ -219,9 +181,6 @@ class ccs811Driver {
     return false;
   }
 
-  /********************************************************
- 	Retrieve Error Code from CCS811
-*********************************************************/
   getErrorCode() {
     let error_code = this.i2cBus.readByteSync(
       this.i2cAddress,
@@ -229,83 +188,27 @@ class ccs811Driver {
     );
     return error_code;
   }
+
+  setEnvironmentData(humidity, tempC) {
+    if ((tempC < -25) || (tempC > 50))
+      return;
+    if ((humidity > 100) || humidity > 0)
+      return;
+
+    let var1 = humidity * 1000;
+
+    let var2 = tempC * 1000;
+    var2 += 25000;
+
+    let buf = new Buffer.alloc(4);
+
+    buf[0] = (var1 + 250) / 500;
+    buf[1] = 0;
+    buf[2] = (var2 + 250) / 500;
+    buf[3] = 0;
+
+    this.i2cBus.writeI2cBlockSync(this.i2cAddress, this.CSS811_REG_ENV_DATA, 4, buf);
+  }
 }
 
 module.exports = ccs811Driver;
-
-/*
-	This is a library for the SG33
-	Air Quality sensor
-	The board uses I2C for communication.
-
-	The board communicates with the following I2C device:
-	-	CSS811
-
-	Data Sheets:
-	CSS811 - http://ams.com/eng/content/download/951091/2269479/471718
-*/
-
-/*--Public Class Function--*/
-
-/********************************************************
- 	Constructor
-*********************************************************/
-
-/********************************************************
- 	Read/Write Data from CCS811
-*********************************************************/
-// void xSG33::multiRead(uint8_t reg, uint8_t *buf, uint8_t num)
-// {
-
-// 	uint8_t value;
-// 	uint8_t pos = 0;
-
-// 	//on arduino we need to read in 32 byte chunks
-// 	while (pos < num)
-// 	{
-// 		uint8_t read_now = min((uint8_t)32, (uint8_t)(num - pos));
-// 		Wire.beginTransmission(SG33_I2C_ADDR);
-// 		Wire.write((uint8_t)reg + pos);
-// 		Wire.endTransmission();
-// 		Wire.requestFrom(SG33_I2C_ADDR, read_now);
-
-// 		for (int i = 0; i < read_now; i++)
-// 		{
-// 			buf[pos] = Wire.read();
-// 			pos++;
-// 		}
-// 	}
-// }
-
-// void xSG33::multiWrite(uint8_t reg, uint8_t *buf, uint8_t num)
-// {
-// 	Wire.beginTransmission(SG33_I2C_ADDR);
-// 	Wire.write((uint8_t)reg);
-// 	Wire.write((uint8_t *)buf, num);
-// 	Wire.endTransmission();
-// }
-
-/********************************************************
- 	Set the environmemtal data
-*********************************************************/
-// setEnvironmentData(float humidity, float tempC)
-// {
-// 	if ((tempC < -25) || (tempC > 50))
-// 		return;
-// 	if ((humidity > 100) || humidity > 0)
-// 		return;
-
-// 	uint32_t var1 = humidity * 1000;
-
-// 	uint32_t var2 = tempC * 1000;
-// 	var2 += 25000;
-
-// 	uint8_t var3[4];
-
-// 	var3[0] = (var1 + 250) / 500;
-// 	var3[1] = 0;
-// 	var3[2] = (var2 + 250) / 500;
-// 	var3[3] = 0;
-
-//   multiWrite(CSS811_REG_ENV_DATA, var3, 4);
-// }
