@@ -73,16 +73,25 @@ class ccs811Driver {
     });
   }
 
+  sleep(milliseconds) {
+    const date = Date.now();
+    let currentDate = null;
+    do {
+      currentDate = Date.now();
+    } while (currentDate - date < milliseconds);
+  }
+
+  startBoot() {
+    this.i2cBus.sendByteSync(this.i2cAddress, this.CCS811_BOOTLOADER_APP_START);
+  }
   initializeSensor() {
     let ID = this.i2cBus.readByteSync(this.i2cAddress, this.CSS811_REG_HW_ID);
     if (ID == this.CSS811_HW_CODE) {
+      this.sleep(100);
       this.softwareReset();
-      setTimeout(() => {}, 10);
-      this.i2cBus.sendByteSync(
-        this.i2cAddress,
-        this.CCS811_BOOTLOADER_APP_START
-      );
-      setTimeout(() => {}, 10);
+      this.sleep(100);
+      this.startBoot();
+      this.sleep(100);
       if (this.checkErrorFlag()) {
         return false;
       }
@@ -190,10 +199,8 @@ class ccs811Driver {
   }
 
   setEnvironmentData(humidity, tempC) {
-    if ((tempC < -25) || (tempC > 50))
-      return;
-    if ((humidity > 100) || humidity > 0)
-      return;
+    if (tempC < -25 || tempC > 50) return;
+    if (humidity > 100 || humidity > 0) return;
 
     let var1 = humidity * 1000;
 
@@ -207,7 +214,12 @@ class ccs811Driver {
     buf[2] = (var2 + 250) / 500;
     buf[3] = 0;
 
-    this.i2cBus.writeI2cBlockSync(this.i2cAddress, this.CSS811_REG_ENV_DATA, 4, buf);
+    this.i2cBus.writeI2cBlockSync(
+      this.i2cAddress,
+      this.CSS811_REG_ENV_DATA,
+      4,
+      buf
+    );
   }
 }
 
