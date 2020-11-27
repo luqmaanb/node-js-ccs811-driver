@@ -1,18 +1,3 @@
-# node-js-ccs811-driver
-
-This is a node.js module for the [CCS811](https://ams.com/-/ams-ccs8xx-product-family-of-voc-sensors-enhances-end-user-experience-for-indoor-air-quality-monitoring) developed by AMS. The sensor reports volatile organic compounds and equivalent CO2 levels. The module portable accross linux platforms such as Raspberry Pi and BeagleBone
-
-## Usage
-
-This is not an official node.js module hence it will need to be installed from github.
-
-1. Install the module
-```npm install luqmaanb/node-js-ccs811-driver```
-2. Run the example ```sudo node example.js```
-
-## Example
-
-```js
 // get the ccs811 driver
 const  CCS811 = require('ccs811');
 
@@ -45,4 +30,3 @@ ccs811.init()
     readSensorData();
   })
   .catch((err) => console.error(`CCS811 initialization failed: ${err} `));
-```

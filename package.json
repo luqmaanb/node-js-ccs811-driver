@@ -1,6 +1,6 @@
 {
   "name": "ccs811",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Node js driver for CCS811 I2C sensor intended for Linux platforms",
   "main": "ccs811.js",
   "repository": {

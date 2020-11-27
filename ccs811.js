@@ -4,7 +4,7 @@ class ccs811Driver {
   constructor(i2cSettings) {
     const i2c = require("i2c-bus");
 
-    const ccs811DefaultAddress = 0x5a;
+    const ccs811DefaultAddress = 0x5a; // default i2c address of ccs811
     this._TVOC = 0;
     this._eCO2 = 0;
 
@@ -51,6 +51,11 @@ class ccs811Driver {
     this.CCS811_DRIVE_MODE_250MS = 0x40;
   }
 
+  /**
+   * This function initiliazes ccs811
+   * @returns {string} resolve with sensor id
+   * @returns {string} reject with error
+   */
   init() {
     return new Promise((resolve, reject) => {
       if (!this.initializeSensor()) {
@@ -60,6 +65,11 @@ class ccs811Driver {
     });
   }
 
+  /**
+   * Read co2 and tvoc values from ccs811
+   * @returns {object} resolve with javascript object of data
+   * @returns {string} reject if unsuccessful
+   */
   readSensorData() {
     return new Promise((resolve, reject) => {
       if (!this.dataAvailable()) {
@@ -73,6 +83,10 @@ class ccs811Driver {
     });
   }
 
+  /**
+   * This function emulates a delay or pause in the code
+   * @param  {number} milliseconds time to delay
+   */
   sleep(milliseconds) {
     const date = Date.now();
     let currentDate = null;
@@ -81,9 +95,19 @@ class ccs811Driver {
     } while (currentDate - date < milliseconds);
   }
 
+  /**
+   * This function begins the sensor so it can be configured
+   */
   startBoot() {
     this.i2cBus.sendByteSync(this.i2cAddress, this.CCS811_BOOTLOADER_APP_START);
   }
+
+
+  /**
+   * This function configures the sensor
+   * @returns {true} on success
+   * @returns {false} on failure
+   */
   initializeSensor() {
     let ID = this.i2cBus.readByteSync(this.i2cAddress, this.CSS811_REG_HW_ID);
     if (ID == this.CSS811_HW_CODE) {
@@ -104,6 +128,12 @@ class ccs811Driver {
     }
   }
 
+
+  /**
+   * This function tuns the algorithm inherent to css811
+   * @returns {true} on success
+   * @returns {false} on failure
+   */
   getAlgorithmResults() {
     let buf = new Buffer.alloc(8);
     this.i2cBus.readI2cBlockSync(
@@ -122,6 +152,12 @@ class ccs811Driver {
     return true;
   }
 
+
+  /**
+   * This function checks if new data is available
+   * @returns {true} new data is available
+   * @returns {false} new data is not available
+   */
   dataAvailable() {
     let status = this.i2cBus.readByteSync(
       this.i2cAddress,
@@ -134,6 +170,9 @@ class ccs811Driver {
     return true;
   }
 
+  /**
+   * This function disables the interupt on css811
+   */
   disableInterrupt() {
     let meas_mode = this.i2cBus.readByteSync(
       this.i2cAddress,
@@ -147,14 +186,25 @@ class ccs811Driver {
     );
   }
 
+  /**
+   * This function gets the tvoc value
+   * @returns {number} tvoc value in ppb
+   */
   readTVOC() {
     return this._TVOC;
   }
 
+  /**
+   * This function gets the co2 value
+   * @returns {number} co2 value in ppm
+   */
   readCO2() {
     return this._eCO2;
   }
 
+  /**
+   * @param  {} mode
+   */
   setDriveMode(mode) {
     let meas_mode = this.i2cBus.readByteSync(
       this.i2cAddress,
@@ -168,6 +218,10 @@ class ccs811Driver {
     );
   }
 
+
+  /**
+   * This function performs a software reset of ccs811
+   */
   softwareReset() {
     let buf = Buffer.from([0x11, 0xe5, 0x72, 0x8a]);
     this.i2cBus.writeI2cBlockSync(
@@ -178,6 +232,12 @@ class ccs811Driver {
     );
   }
 
+  /**
+   * This functions reads the status register to check if the error bit
+   * has been raised
+   * @returns {true} no error
+   * @returns {false} error
+   */
   checkErrorFlag() {
     let error = this.i2cBus.readByteSync(
       this.i2cAddress,
@@ -190,6 +250,11 @@ class ccs811Driver {
     return false;
   }
 
+
+  /**
+   * This function reads in error flags
+   * @returns {number} error code
+   */
   getErrorCode() {
     let error_code = this.i2cBus.readByteSync(
       this.i2cAddress,
@@ -198,6 +263,13 @@ class ccs811Driver {
     return error_code;
   }
 
+  /**
+   * This function compensates for the environment by adding the
+   * ambient temperature and humdity to the algorithm for more
+   * accurate results
+   * @param  {number} humidity ambient humidity
+   * @param  {number} tempC ambient temperature
+   */
   setEnvironmentData(humidity, tempC) {
     if (tempC < -25 || tempC > 50) return;
     if (humidity > 100 || humidity > 0) return;
@@ -223,4 +295,5 @@ class ccs811Driver {
   }
 }
 
+// make the driver publicly available
 module.exports = ccs811Driver;
